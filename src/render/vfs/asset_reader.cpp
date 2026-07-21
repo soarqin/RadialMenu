@@ -250,8 +250,7 @@ bool IsIconAssetPath(const std::wstring& path)
 bool AllowsDirectRead(const wchar_t* path)
 {
     const std::wstring normalized = NormalizePath(path);
-    return normalized == L"data0:/menu/low/01_common.tpf.dcx" ||
-        normalized == L"data0:/menu/low/01_common.sblytbnd.dcx";
+    return IsIconAssetPath(normalized);
 }
 
 bool TryGetCachedFile(const wchar_t* path, std::vector<std::uint8_t>& bytes)
