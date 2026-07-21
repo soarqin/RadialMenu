@@ -54,7 +54,6 @@ static bool                        g_icons_ready = false;
 static bool                        g_asset_reader_installed = false;
 static bool                        g_gameplay_ready_last_frame = false;
 static UINT                        g_gameplay_ready_frame_count = 0;
-static bool                        g_invalidate_slots_after_gameplay_return = false;
 static bool                        g_logged_icon_vfs_unavailable = false;
 static ULONGLONG                   g_next_icon_init_attempt_ms = 0;
 static bool                        g_refreshed_open_icon_atlases = false;
@@ -238,7 +237,6 @@ static void ReleaseOverlayResources(const char* reason)
     g_refreshed_open_icon_atlases = false;
     g_gameplay_ready_last_frame = false;
     g_gameplay_ready_frame_count = 0;
-    g_invalidate_slots_after_gameplay_return = false;
     g_last_slow_asset_install_log_ms = 0;
     g_last_slow_gameplay_state_log_ms = 0;
     g_last_slow_native_input_log_ms = 0;
@@ -408,26 +406,21 @@ static HRESULT STDMETHODCALLTYPE HookedPresent(IDXGISwapChain3* swap_chain, UINT
     section_start = TimingStart();
     const bool gameplay_ready = gameplay_state::RefreshNormalGameplayHudState();
     const bool entered_gameplay = !g_gameplay_ready_last_frame && gameplay_ready;
-    const bool left_gameplay = g_gameplay_ready_last_frame && !gameplay_ready;
     g_gameplay_ready_frame_count = gameplay_ready ? std::min<UINT>(g_gameplay_ready_frame_count + 1, 60) : 0;
     LogSlowDuration("gameplay_state::RefreshNormalGameplayHudState", section_start, 4, g_last_slow_gameplay_state_log_ms);
 
-    if (!kDisableNativeInputForDiagnosticBuild && (gameplay_ready || left_gameplay)) {
+    if (entered_gameplay) {
+        radial_input::Reset();
+        native_input::PrepareGameplayReturn();
+    }
+    if (!kDisableNativeInputForDiagnosticBuild && gameplay_ready) {
         section_start = TimingStart();
         native_input::SampleFrame();
         LogSlowDuration("native_input::SampleFrame", section_start, 4, g_last_slow_native_input_log_ms);
     }
     const bool radial_open = radial_menu::IsOpen();
 
-    if (left_gameplay) {
-        g_invalidate_slots_after_gameplay_return = true;
-    }
-
     if (gameplay_ready) {
-        if (entered_gameplay && g_invalidate_slots_after_gameplay_return) {
-            InvalidateRadialSlotCaches();
-            g_invalidate_slots_after_gameplay_return = false;
-        }
         if (!g_icons_ready) {
             section_start = TimingStart();
             TryInitializeIcons();

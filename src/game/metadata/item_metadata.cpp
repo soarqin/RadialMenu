@@ -75,6 +75,8 @@ std::uint32_t ReadAnyGoodsIconId(std::uintptr_t repo, std::uint32_t item_id)
 bool InitializeItemMetadata()
 {
     message_repository::Initialize();
+    const auto repo = param_repository::ResolveSoloParamRepository();
+    if (repo) LocateEquipParamGoodsOffset(repo);
     return true;
 }
 

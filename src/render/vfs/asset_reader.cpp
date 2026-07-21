@@ -53,6 +53,27 @@ bool g_logged_icon_resolution_diagnostics = false;
 
 bool IsIconAssetPath(const std::wstring& path);
 
+bool IsIconAssetPathRaw(const wchar_t* path)
+{
+    if (!path) return false;
+
+    static constexpr const wchar_t* paths[] = {
+        L"data0:/menu/low/01_common.tpf.dcx",
+        L"data0:/menu/low/01_common.sblytbnd.dcx",
+        L"data0:/menu/hi/01_common.tpf.dcx",
+        L"data0:/menu/hi/01_common.sblytbnd.dcx",
+        L"data0:\\menu\\low\\01_common.tpf.dcx",
+        L"data0:\\menu\\low\\01_common.sblytbnd.dcx",
+        L"data0:\\menu\\hi\\01_common.tpf.dcx",
+        L"data0:\\menu\\hi\\01_common.sblytbnd.dcx",
+    };
+
+    for (const wchar_t* candidate : paths) {
+        if (_wcsicmp(path, candidate) == 0) return true;
+    }
+    return false;
+}
+
 std::string NarrowPath(const std::wstring& path)
 {
     if (path.empty()) return {};
@@ -456,8 +477,8 @@ void* HookedOpenFile(DlDevice* device, DlUtf16String2015* path, const wchar_t* p
         Log("Asset reader: captured game VFS read context.");
         g_logged_game_read_context = true;
     }
-    const std::wstring normalized_path = NormalizePath(path_cstr);
-    if (file_operator && IsIconAssetPath(normalized_path)) {
+    if (file_operator && IsIconAssetPathRaw(path_cstr)) {
+        const std::wstring normalized_path = NormalizePath(path_cstr);
         {
             std::lock_guard lock(g_cache_mutex);
             g_pending_reads[file_operator] = normalized_path;

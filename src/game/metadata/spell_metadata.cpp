@@ -114,6 +114,8 @@ RuntimeMagicMetadata ReadRuntimeMagicMetadata(std::uint32_t spell_id)
 bool InitializeSpellMetadata()
 {
     message_repository::Initialize();
+    const auto repo = param_repository::ResolveSoloParamRepository();
+    if (repo) LocateEquipParamGoodsOffset(repo);
     return true;
 }
 
