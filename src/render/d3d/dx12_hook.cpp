@@ -208,7 +208,7 @@ static bool RefreshRequiredIconAtlasesForSlots(const std::vector<RadialSlot>& sl
 
 static void PreloadKnownIconAtlases()
 {
-    if (!g_icons_ready || radial_menu::IsOpen()) return;
+    if (!g_icons_ready || radial_menu::IsOpen() || g_background_icons_complete) return;
 
     const ULONGLONG now = GetTickCount64();
     if (g_next_background_icon_preload_ms != 0 && now < g_next_background_icon_preload_ms) return;
@@ -234,7 +234,7 @@ static void PreloadKnownIconAtlases()
     if (!g_background_icons_complete && !g_background_icon_ids.empty()) {
         g_background_icons_complete = icon_loader::PreloadIcons(g_background_icon_ids, 1);
     }
-    g_next_background_icon_preload_ms = now + (g_background_icons_complete ? 2000 : 500);
+    g_next_background_icon_preload_ms = now + 500;
 }
 
 static void WaitForQueueIdle()
